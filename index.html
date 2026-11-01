@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>五子棋對弈系統 · gomoku-arena</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo"><i class="s b"></i><i class="s w"></i></span>
+      <span>五子棋對弈系統</span>
+      <small>gomoku-arena</small>
+    </div>
+    <nav class="tabs">
+      <button class="tab" data-mode="ai">🤖 人機對弈</button>
+      <button class="tab" data-mode="pvp">👥 雙人對弈</button>
+      <button class="tab" data-mode="study">📖 打譜研究</button>
+    </nav>
+  </header>
+
+  <main class="layout">
+    <section class="board-area">
+      <div class="players">
+        <div class="player" id="player-1"></div>
+        <div class="vs">VS</div>
+        <div class="player" id="player-2"></div>
+      </div>
+
+      <div class="board-wrap">
+        <canvas id="board"></canvas>
+        <div id="overlay" class="overlay" hidden></div>
+      </div>
+
+      <div class="navbar">
+        <button class="icon-btn" id="nav-first" title="第一手 (Home)">⏮</button>
+        <button class="icon-btn" id="nav-prev" title="上一手 (←)">◀</button>
+        <span class="nav-pos" id="nav-pos">0 / 0</span>
+        <button class="icon-btn" id="nav-next" title="下一手 (→)">▶</button>
+        <button class="icon-btn" id="nav-last" title="最新一手 (End)">⏭</button>
+        <button class="icon-btn" id="nav-play" title="自動播放 (空白鍵)">⏯</button>
+        <select id="speed" title="播放速度">
+          <option value="1500">慢</option>
+          <option value="800">中</option>
+          <option value="350">快</option>
+        </select>
+        <span class="sep"></span>
+        <label class="toggle"><input type="checkbox" id="toggle-num"> 手數</label>
+        <label class="toggle"><input type="checkbox" id="toggle-sound"> 音效</label>
+      </div>
+    </section>
+
+    <aside class="side">
+      <div class="panel" data-modes="ai">
+        <h3>選擇對手</h3>
+        <div id="ai-list" class="ai-list"></div>
+        <div class="color-choice">
+          <span>我方執子：</span>
+          <label><input type="radio" name="color" value="1"> ⚫ 黑（先手）</label>
+          <label><input type="radio" name="color" value="2"> ⚪ 白（後手）</label>
+          <label><input type="radio" name="color" value="0"> 🎲 隨機</label>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="status" id="status"></div>
+        <div class="engine-info" id="engine-info"></div>
+        <div class="btn-row">
+          <button class="btn primary" id="btn-new">✦ 新局</button>
+          <button class="btn" id="btn-undo" data-modes="ai pvp study">↶ 悔棋</button>
+          <button class="btn" id="btn-hint">💡 提示</button>
+          <button class="btn danger" id="btn-resign" data-modes="ai pvp">🏳 認輸</button>
+          <button class="btn" id="btn-takeover" data-modes="study">🤖 從此局面與 AI 對弈</button>
+        </div>
+      </div>
+
+      <div class="panel grow">
+        <h3>棋譜 <small id="record-title"></small></h3>
+        <div id="move-list" class="move-list"></div>
+        <textarea id="comment" placeholder="為目前這一手加上註解…（打譜研究用）"></textarea>
+        <div class="btn-row small">
+          <button class="btn" id="btn-save">💾 儲存</button>
+          <button class="btn" id="btn-library">📚 棋譜庫</button>
+          <button class="btn" id="btn-import">📥 匯入</button>
+          <button class="btn" id="btn-export">📤 匯出</button>
+          <button class="btn" id="btn-copy">📋 複製</button>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <div id="modal" class="modal" hidden>
+    <div class="modal-box" id="modal-box"></div>
+  </div>
+  <div id="toast" class="toast"></div>
+
+  <script src="js/ai.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
