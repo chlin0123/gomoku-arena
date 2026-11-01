@@ -406,7 +406,7 @@ function GomokuAIFactory() {
 
   const CFG = {
     2: { depth: 2, time: 1200, rootWidth: 10, widths: [10, 10, 8], vcfDepth: 6, vcfNodes: 3000, defendVCF: false },
-    3: { depth: 6, time: 1500, rootWidth: 12, widths: [12, 12, 10, 8], vcfDepth: 10, vcfNodes: 12000, defendVCF: true },
+    3: { depth: 4, time: 2000, rootWidth: 12, widths: [12, 12, 10, 8], vcfDepth: 10, vcfNodes: 12000, defendVCF: true },
     4: { depth: 12, time: 4000, rootWidth: 16, widths: [16, 14, 12, 10, 8, 8, 6], vcfDepth: 16, vcfNodes: 50000, defendVCF: true },
   };
 

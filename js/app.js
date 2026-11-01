@@ -617,7 +617,8 @@
   function renderAIList() {
     const st = loadLS(LS_STATS, {});
     $('#ai-list').innerHTML = AIS.map((a, i) => {
-      const r = st[i] || { w: 0, l: 0, d: 0 };
+      const s = st[i] || {};
+      const r = { w: s.w | 0, l: s.l | 0, d: s.d | 0 };
       const total = r.w + r.l + r.d;
       const rec = total ? `戰績：${r.w} 勝 ${r.l} 敗${r.d ? ' ' + r.d + ' 和' : ''}（勝率 ${Math.round(r.w / total * 100)}%）` : '尚未交手';
       const playing = state.mode === 'ai' && state.gameAi === i && state.moves.length > 0 && !state.result;
@@ -734,16 +735,16 @@
   }
 
   function openLibrary() {
-    const lib = loadLS(LS_LIB, []);
+    const lib = loadLS(LS_LIB, []).filter(r => r && Array.isArray(r.moves));
     const items = lib.length ? lib.map(r => `
       <div class="lib-item">
         <div class="meta">
           <div class="t">${esc(r.title)}</div>
-          <div class="d">${esc(r.black)} vs ${esc(r.white)} · ${esc(r.result || '')} · ${r.moves.length} 手 · ${new Date(r.date).toLocaleString()}</div>
+          <div class="d">${esc(r.black)} vs ${esc(r.white)} · ${esc(r.result || '')} · ${r.moves.length} 手 · ${esc(new Date(r.date).toLocaleString())}</div>
         </div>
-        <button class="btn primary" data-lib="load" data-id="${r.id}">載入</button>
-        <button class="btn" data-lib="export" data-id="${r.id}">匯出</button>
-        <button class="btn danger" data-lib="del" data-id="${r.id}">刪除</button>
+        <button class="btn primary" data-lib="load" data-id="${esc(r.id)}">載入</button>
+        <button class="btn" data-lib="export" data-id="${esc(r.id)}">匯出</button>
+        <button class="btn danger" data-lib="del" data-id="${esc(r.id)}">刪除</button>
       </div>`).join('') : '<div class="hint-text" style="text-align:center;padding:20px">棋譜庫是空的，下完一盤後按「儲存」即可收藏。</div>';
     openModal(`<h3>📚 棋譜庫（${lib.length}）</h3>${items}
       <div class="modal-actions">
@@ -760,7 +761,7 @@
     const moves = [];
     for (let i = 0; i < posList.length; i++) {
       const pos = posList[i];
-      if (pos == null || pos < 0 || pos >= N * N || b[pos]) throw new Error(`第 ${i + 1} 手（${rec.moves[i]}）位置無效或重複`);
+      if (!Number.isInteger(pos) || pos < 0 || pos >= N * N || b[pos]) throw new Error(`第 ${i + 1} 手（${rec.moves[i]}）位置無效或重複`);
       const player = sideAt(i);
       b[pos] = player;
       const win = checkWin(b, pos);
@@ -783,13 +784,31 @@
     if (text[0] === '{' || text[0] === '[') {
       const obj = JSON.parse(text);
       const list = Array.isArray(obj) ? obj : [obj];
-      const valid = list.filter(r => r && Array.isArray(r.moves));
+      const valid = list.map(normalizeRecord).filter(Boolean);
       if (!valid.length) throw new Error('JSON 中找不到 moves 欄位');
       return valid;
     }
     const tokens = text.match(/[a-oA-O](?:1[0-5]|[1-9])(?![0-9])/g) || [];
     if (!tokens.length) throw new Error('找不到任何棋步（格式例：H8 I9 J10 …）');
-    return [{ title: '匯入的棋譜', moves: tokens.map(t => t.toUpperCase()) }];
+    return [normalizeRecord({ title: '匯入的棋譜', moves: tokens.map(t => t.toUpperCase()) })];
+  }
+
+  // 將不可信的外部棋譜正規化：只保留已知欄位、強制型別與長度，並一律重新產生 id
+  let idSeq = 0;
+  function normalizeRecord(r) {
+    if (!r || typeof r !== 'object' || !Array.isArray(r.moves)) return null;
+    const str = (v, d, max) => (v == null || v === '' ? d : String(v)).slice(0, max || 200);
+    const t = Date.parse(r.date);
+    return {
+      id: Date.now() * 1000 + (idSeq++ % 1000),
+      title: str(r.title, '匯入的棋譜'),
+      date: isNaN(t) ? new Date().toISOString() : new Date(t).toISOString(),
+      black: str(r.black, '黑方'),
+      white: str(r.white, '白方'),
+      result: str(r.result, ''),
+      moves: r.moves.slice(0, N * N).map(m => (typeof m === 'number' ? m : String(m).slice(0, 4))),
+      comments: Array.isArray(r.comments) ? r.comments.slice(0, N * N).map(c => (c == null ? '' : String(c).slice(0, 2000))) : [],
+    };
   }
 
   function openImport() {
@@ -815,7 +834,7 @@
         const recs = parseRecordText($('#m-text').value);
         if (recs.length > 1) {
           const lib = loadLS(LS_LIB, []);
-          recs.forEach((r, i) => lib.unshift(Object.assign({ id: Date.now() + i, date: new Date().toISOString(), black: '黑方', white: '白方', result: '' }, r)));
+          recs.forEach(r => lib.unshift(r));
           saveLS(LS_LIB, lib);
           toast(`已將 ${recs.length} 份棋譜加入棋譜庫`);
         }
