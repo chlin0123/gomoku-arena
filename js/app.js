@@ -57,7 +57,13 @@
   const $$ = s => Array.from(document.querySelectorAll(s));
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const LS_LIB = 'gomoku.library', LS_STATS = 'gomoku.stats', LS_PREF = 'gomoku.prefs';
-  const loadLS = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch (e) { return d; } };
+  const loadLS = (k, d) => {
+    try {
+      const v = JSON.parse(localStorage.getItem(k));
+      if (v == null || typeof v !== typeof d || Array.isArray(v) !== Array.isArray(d)) return d;
+      return v;
+    } catch (e) { return d; }
+  };
   const saveLS = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* ignore */ } };
 
   const posToCoord = pos => COLS[pos % N] + (N - Math.floor(pos / N));
@@ -89,7 +95,14 @@
   // ------------------------------------------------------------------
   // 狀態
   // ------------------------------------------------------------------
-  const prefs = Object.assign({ aiIndex: 2, colorChoice: 1, showNumbers: false, sound: true, speed: 800 }, loadLS(LS_PREF, {}));
+  const rawPrefs = loadLS(LS_PREF, {});
+  const prefs = {
+    aiIndex: (Number.isInteger(rawPrefs.aiIndex) && rawPrefs.aiIndex >= 0 && rawPrefs.aiIndex < AIS.length) ? rawPrefs.aiIndex : 2,
+    colorChoice: [0, 1, 2].includes(rawPrefs.colorChoice) ? rawPrefs.colorChoice : 1,
+    showNumbers: !!rawPrefs.showNumbers,
+    sound: rawPrefs.sound === undefined ? true : !!rawPrefs.sound,
+    speed: [350, 800, 1500].includes(rawPrefs.speed) ? rawPrefs.speed : 800,
+  };
   const savePrefs = () => saveLS(LS_PREF, prefs);
 
   const state = {
@@ -128,6 +141,7 @@
           'self.onmessage=function(e){var r=AI.think(e.data.req);r.id=e.data.id;self.postMessage(r);};';
         const url = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));
         this.worker = new Worker(url);
+        URL.revokeObjectURL(url);
         this.worker.onmessage = e => {
           const cb = this.cbs.get(e.data.id);
           if (cb) { this.cbs.delete(e.data.id); cb(e.data); }
@@ -618,7 +632,7 @@
     const st = loadLS(LS_STATS, {});
     $('#ai-list').innerHTML = AIS.map((a, i) => {
       const s = st[i] || {};
-      const r = { w: s.w | 0, l: s.l | 0, d: s.d | 0 };
+      const r = { w: Math.max(0, s.w | 0), l: Math.max(0, s.l | 0), d: Math.max(0, s.d | 0) };
       const total = r.w + r.l + r.d;
       const rec = total ? `戰績：${r.w} 勝 ${r.l} 敗${r.d ? ' ' + r.d + ' 和' : ''}（勝率 ${Math.round(r.w / total * 100)}%）` : '尚未交手';
       const playing = state.mode === 'ai' && state.gameAi === i && state.moves.length > 0 && !state.result;
@@ -717,7 +731,7 @@
     openModal(`
       <h3>💾 儲存棋譜</h3>
       <label>棋譜名稱<input type="text" id="m-title" value="${esc(defaultTitle())}"></label>
-      <div class="hint-text">共 ${state.moves.length} 手 · 結果：${resultText()} · 註解會一併保存</div>
+      <div class="hint-text">共 ${state.moves.length} 手 · 結果：${esc(resultText())} · 註解會一併保存</div>
       <div class="modal-actions">
         <button class="btn" data-close>取消</button>
         <button class="btn primary" id="m-ok">儲存</button>
@@ -756,6 +770,8 @@
   }
 
   function loadRecord(rec) {
+    rec = normalizeRecord(rec);
+    if (!rec) throw new Error('棋譜格式無效');
     const posList = rec.moves.map(m => typeof m === 'number' ? m : coordToPos(m));
     const b = new Int8Array(N * N);
     const moves = [];
@@ -778,9 +794,11 @@
     render();
   }
 
+  const MAX_IMPORT_BYTES = 1024 * 1024;
   function parseRecordText(text) {
-    text = text.trim();
+    text = String(text || '').trim();
     if (!text) throw new Error('內容是空的');
+    if (text.length > MAX_IMPORT_BYTES) throw new Error('棋譜內容過大（上限 1 MB）');
     if (text[0] === '{' || text[0] === '[') {
       const obj = JSON.parse(text);
       const list = Array.isArray(obj) ? obj : [obj];
@@ -825,6 +843,7 @@
     $('#m-file').onchange = e => {
       const f = e.target.files[0];
       if (!f) return;
+      if (f.size > MAX_IMPORT_BYTES) { toast('檔案過大（上限 1 MB）'); e.target.value = ''; return; }
       const rd = new FileReader();
       rd.onload = () => { $('#m-text').value = rd.result; };
       rd.readAsText(f, 'utf-8');
@@ -849,7 +868,7 @@
   function download(name, text) {
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([text], { type: 'application/json;charset=utf-8' }));
-    a.download = name.replace(/[\\/:*?"<>|]/g, '_');
+    a.download = String(name || 'gomoku.json').replace(/[\x00-\x1f\x7f\\/:*?"<>|]/g, '_').slice(0, 120);
     document.body.appendChild(a);
     a.click();
     setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
