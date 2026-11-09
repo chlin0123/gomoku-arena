@@ -392,7 +392,24 @@ function GomokuAIFactory() {
     return top[0].pos;
   }
 
-  // Lv2 阿福伯：看一步，有四必擋，活三偶爾漏
+  // Lv2 小桃：程度介於原本 Lv1 與 Lv2 之間，能擋多數衝四但偶有疏漏
+  function novice(p) {
+    const list = scoreCandidates(p);
+    const win = list.find(m => m.sa >= FIVE);
+    if (win && Math.random() < 0.90) return win.pos;
+    const blk = list.find(m => m.sd >= FIVE);
+    if (blk && Math.random() < 0.75) return blk.pos;
+    const live4 = list.find(m => m.sa >= LIVE4);
+    if (live4 && Math.random() < 0.50) return live4.pos;
+    const top = list.slice(0, 6);
+    let total = 0;
+    const w = top.map((m, i) => (total += 1 / (i + 1)));
+    const r = Math.random() * total;
+    for (let i = 0; i < top.length; i++) if (r <= w[i]) return top[i].pos;
+    return top[0].pos;
+  }
+
+  // Lv3 阿福伯（原 Lv2）：看一步，有四必擋，活三偶爾漏
   function casual(p) {
     const list = scoreCandidates(p);
     const m = list.find(x => x.sa >= FIVE) || list.find(x => x.sd >= FIVE) || list.find(x => x.sa >= LIVE4);
@@ -405,9 +422,8 @@ function GomokuAIFactory() {
   }
 
   const CFG = {
-    2: { depth: 2, time: 1200, rootWidth: 10, widths: [10, 10, 8], vcfDepth: 6, vcfNodes: 3000, defendVCF: false },
-    3: { depth: 4, time: 2000, rootWidth: 12, widths: [12, 12, 10, 8], vcfDepth: 10, vcfNodes: 12000, defendVCF: true },
-    4: { depth: 12, time: 4000, rootWidth: 16, widths: [16, 14, 12, 10, 8, 8, 6], vcfDepth: 16, vcfNodes: 50000, defendVCF: true },
+    3: { depth: 2, time: 1200, rootWidth: 10, widths: [10, 10, 8], vcfDepth: 6, vcfNodes: 3000, defendVCF: false },
+    4: { depth: 4, time: 2000, rootWidth: 12, widths: [12, 12, 10, 8], vcfDepth: 10, vcfNodes: 12000, defendVCF: true },
   };
 
   function think(req) {
@@ -430,6 +446,8 @@ function GomokuAIFactory() {
     } else if (lv <= 0) {
       res = { move: beginner(p) };
     } else if (lv === 1) {
+      res = { move: novice(p) };
+    } else if (lv === 2) {
       res = { move: casual(p) };
     } else {
       res = searchRoot(p, CFG[Math.min(lv, 4)]);

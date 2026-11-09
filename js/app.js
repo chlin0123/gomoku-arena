@@ -20,35 +20,35 @@
       loseQuote: '再一次啦～這次不算！',
     },
     {
-      name: '阿福伯', title: '初級', stars: 2, avatar: '👴', color: '#fbc02d', delay: 600,
+      name: '小桃', title: '初級', stars: 2, avatar: '👧', color: '#4db6ac', delay: 550,
+      style: '專心學棋 · 偶有漏防',
+      bio: '小豆子的姊姊，國小高年級生。已經懂得注意對手的四連威脅，但遇到活三或雙重攻勢時還是容易手忙腳亂。',
+      winQuote: '耶！我有認真看棋盤喔！',
+      loseQuote: '啊，那邊沒注意到……再來一盤！',
+    },
+    {
+      name: '阿福伯', title: '中級', stars: 3, avatar: '👴', color: '#fbc02d', delay: 600,
       style: '一步看一步 · 攻守直覺',
       bio: '公園涼亭的常客，泡茶下棋三十年。看得懂眼前的攻防，有四必擋，但算不遠，對手的活三偶爾會漏看。',
       winQuote: '呵呵，少年仔，再練練啦。',
       loseQuote: '後生可畏啊！來，喝杯茶。',
     },
     {
-      name: '林書生', title: '中級', stars: 3, avatar: '🧑‍🎓', color: '#4fc3f7', delay: 500,
+      name: '林書生', title: '高級', stars: 4, avatar: '🧑‍🎓', color: '#4fc3f7', delay: 500,
       style: '穩健佈局 · 兩步推演',
       bio: '大學棋社社長，擅長佈局與活三進攻。每一步都會推演雙方的應對，也能抓住短手數的連續衝四殺。',
       winQuote: '承讓了，這盤的佈局值得復盤。',
       loseQuote: '精彩！我得回去研究這個變化。',
     },
     {
-      name: '墨隱', title: '高級', stars: 4, avatar: '🥷', color: '#ba68c8', delay: 400,
+      name: '墨隱', title: '大師', stars: 5, avatar: '🥷', color: '#ba68c8', delay: 400,
       style: '凌厲殺法 · 四層搜尋',
       bio: '隱居山林的劍客棋士，出手凌厲。精通 VCF 連續衝四殺法，能看穿你的殺著並預先化解，一旦露出破綻便難以翻身。',
       winQuote: '破綻已現，勝負早定。',
       loseQuote: '……好棋。我會再來。',
     },
-    {
-      name: '天元', title: '大師', stars: 5, avatar: '🧙', color: '#ef5350', delay: 300,
-      style: '深算全局 · 攻防無隙',
-      bio: '傳說中的五子棋聖，據說執黑從未輸過。以迭代加深搜尋、置換表與深度威脅計算，洞察十餘步之後的殺機。',
-      winQuote: '棋盤之上，萬變皆在算中。',
-      loseQuote: '妙哉！老夫已多年未嘗敗績。',
-    },
   ];
-  const HINT_LEVEL = 3;
+  const HINT_LEVEL = 4;
 
   // ------------------------------------------------------------------
   // 小工具
